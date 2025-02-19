@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 ENV PIP_BREAK_SYSTEM_PACKAGES=1
+ENV WHISPERX_MODEL=tiny
     
 # Upgrade pip
 RUN pip3 install --no-cache-dir --upgrade pip
@@ -21,6 +22,8 @@ RUN pip install git+https://github.com/m-bain/whisperx.git torch torchvision tor
 RUN mkdir -p /app/uploads
 COPY audio.aac app.py config.py load_model.py /app
 RUN python3 load_model.py
+RUN pip install --no-cache-dir gunicorn flask
+RUN gunicorn -b 0.0.0.0:5000 --workers 1 --timeout 300 app:app
 
 # Make port 5000 available to the world outside this container
 EXPOSE 5000
@@ -30,3 +33,4 @@ ENV FLASK_RUN_HOST=0.0.0.0
 
 # Run the command to start your app
 CMD ["/opt/conda/envs/whisperx/bin/gunicorn", "-b", "0.0.0.0:5000", "--workers", "1", "--timeout", "300", "app:app"]
+# CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8000", "app:app"]
