@@ -23,8 +23,9 @@ COPY audio.aac app.py config.py load_model.py /app
 
 ENV WHISPERX_MODEL=tiny
 RUN python3 load_model.py
+RUN apt-get update && apt-get install -y curl
+
 RUN pip install --no-cache-dir gunicorn flask
-# RUN gunicorn -b 0.0.0.0:5000 --workers 1 --timeout 300 app:app
 
 # Make port 5000 available to the world outside this container
 EXPOSE 5000
