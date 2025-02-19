@@ -1,26 +1,26 @@
-FROM debian
+FROM debian:bookworm-slim
 
-# Set the working directory in the container to /app
+# Set working directory
 WORKDIR /app
 
-# Install required packages and Miniconda
-RUN apt update && apt install -y wget ffmpeg
-RUN apt update && wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh && \
-    bash miniconda.sh -b -p /opt/conda && \
-    rm miniconda.sh && \
-    /opt/conda/bin/conda init
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    python3 python3-pip python3-venv \
+    git \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
 
-# Set environment variables for Conda
-ENV PATH="/opt/conda/bin:$PATH"
+ENV PIP_BREAK_SYSTEM_PACKAGES=1
+    
+# Upgrade pip
+RUN pip3 install --no-cache-dir --upgrade pip
 
-# Copy the environment file and create the Conda environment
-COPY environment.yaml /app
-RUN conda env create -f /app/environment.yaml
+RUN pip install git+https://github.com/m-bain/whisperx.git torch torchvision torchaudio faster-whisper --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
 
 # Copy the app itself
 RUN mkdir -p /app/uploads
-COPY app.py config.py load_model.py /app
-RUN /bin/bash -c "source activate whisperx && cd /app; python3 load_model.py"
+COPY audio.aac app.py config.py load_model.py /app
+RUN python3 load_model.py
 
 # Make port 5000 available to the world outside this container
 EXPOSE 5000

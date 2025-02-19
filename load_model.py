@@ -11,4 +11,3 @@ audio = whisperx.load_audio(audio_file)
 result = model.transcribe(audio, batch_size=batch_size)
 
 print(result["segments"]) # before alignment
-
