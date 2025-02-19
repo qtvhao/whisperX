@@ -1,11 +1,16 @@
 name: whisperx
 channels:
   - defaults
+  - pytorch
   - conda-forge
   - anaconda
 
 dependencies:
+  - python=3.10
+  - pytorch==2.0.0
+  - torchaudio==2.0.0
   - ffmpeg
   - cpuonly
   - pip:
       - whisperx
+      - numpy

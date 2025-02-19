@@ -19,7 +19,8 @@ RUN conda env create -f /app/environment.yaml
 
 # Copy the app itself
 RUN mkdir -p /app/uploads
-COPY app.py config.py /app
+COPY app.py config.py load_model.py /app
+RUN /bin/bash -c "source activate whisperx && cd /app; python3 load_model.py"
 
 # Make port 5000 available to the world outside this container
 EXPOSE 5000
