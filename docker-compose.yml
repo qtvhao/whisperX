@@ -3,6 +3,7 @@ version: "3.8"
 services:
   app:
     build: .
+    stop_grace_period: 0s
     container_name: whisperx_app
     restart: always
     ports:
@@ -12,6 +13,7 @@ services:
       - WHISPERX_MODEL=tiny
       - BATCH_SIZE=8
     volumes:
+      - ./torch-hub/:/root/.cache/torch/hub/
       - ./uploads:/app/uploads
     command: ["gunicorn", "-b", "0.0.0.0:5000", "--workers", "1", "--timeout", "300", "app:app"]
     healthcheck:
@@ -22,6 +24,7 @@ services:
       start_period: 10s
 
   test_transcribe:
+    stop_grace_period: 0s
     image: curlimages/curl:latest
     depends_on:
       app:
@@ -33,23 +36,19 @@ services:
       - |
         echo "App is up! Running /transcribe test..."
 
-        AUDIO_FILE="/test_audio/sample.aac"
-        if [ ! -f "$AUDIO_FILE" ]; then
-          echo "Error: Audio file not found at $AUDIO_FILE"
-          exit 1
-        fi
-
         # Convert audio file to Base64
-        AUDIO_BASE64=$(base64 -w 0 "$AUDIO_FILE")
+        
+        echo "{\"audio\": \"$(base64 -w 0 /test_audio/sample.aac)\"}" > /tmp/request.json
 
-        # Send transcription request
+        # Send the transcription request using the JSON file
         curl -X POST http://app:5000/transcribe \
           -H "Content-Type: application/json" \
-          -d "{\"audio\": \"$AUDIO_BASE64\"}"
+          --data @/tmp/request.json
 
         echo "/transcribe test completed!"
 
   test_align:
+    stop_grace_period: 0s
     image: curlimages/curl:latest
     depends_on:
       app:

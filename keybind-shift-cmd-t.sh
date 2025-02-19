@@ -1,7 +1,8 @@
 #!/bin/bash
 set -x
 
-docker compose up --build | tee ./dlogs.txt
+docker compose down
+docker compose up app test_transcribe | tee ./dlogs.txt
 # python3 ./load_model.py
 
 # docker build .
