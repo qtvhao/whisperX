@@ -1,0 +1,11 @@
+name: whisperx
+channels:
+  - defaults
+  - conda-forge
+  - anaconda
+
+dependencies:
+  - ffmpeg
+  - cpuonly
+  - pip:
+      - whisperx
