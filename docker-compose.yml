@@ -1,0 +1,66 @@
+version: "3.8"
+
+services:
+  app:
+    build: .
+    container_name: whisperx_app
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_RUN_HOST=0.0.0.0
+      - WHISPERX_MODEL=tiny
+      - BATCH_SIZE=8
+    volumes:
+      - ./uploads:/app/uploads
+    command: ["gunicorn", "-b", "0.0.0.0:5000", "--workers", "1", "--timeout", "300", "app:app"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  test_transcribe:
+    image: curlimages/curl:latest
+    depends_on:
+      app:
+        condition: service_healthy
+    volumes:
+      - ./test_audio:/test_audio  # Mount local audio folder
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "App is up! Running /transcribe test..."
+
+        AUDIO_FILE="/test_audio/sample.aac"
+        if [ ! -f "$AUDIO_FILE" ]; then
+          echo "Error: Audio file not found at $AUDIO_FILE"
+          exit 1
+        fi
+
+        # Convert audio file to Base64
+        AUDIO_BASE64=$(base64 -w 0 "$AUDIO_FILE")
+
+        # Send transcription request
+        curl -X POST http://app:5000/transcribe \
+          -H "Content-Type: application/json" \
+          -d "{\"audio\": \"$AUDIO_BASE64\"}"
+
+        echo "/transcribe test completed!"
+
+  test_align:
+    image: curlimages/curl:latest
+    depends_on:
+      app:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "App is up! Running /align test..."
+
+        curl -X POST http://app:5000/align \
+          -H "Content-Type: application/json" \
+          -d '{"audio": "BASE64_ENCODED_AUDIO_STRING", "segments": [{"text": "Hello world"}]}'
+
+        echo "/align test completed!"

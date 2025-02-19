@@ -1,7 +1,6 @@
 import whisperx
 from flask import Flask, request, jsonify
 import os
-import gunicorn.app.base
 import base64
 import io
 import numpy as np
@@ -24,6 +23,10 @@ def decode_audio(audio_base64):
     audio_buffer = io.BytesIO(audio_bytes)
     audio, samplerate = sf.read(audio_buffer)
     return np.array(audio, dtype=np.float32)
+
+@app.route("/healthcheck", methods=["GET"])
+def healthcheck():
+    return jsonify({"status": "healthy"}), 200
 
 @app.route("/transcribe", methods=["POST"])
 def transcribe_endpoint():
